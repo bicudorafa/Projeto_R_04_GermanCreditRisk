@@ -62,3 +62,25 @@ test_sample <- as.data.frame(subset(Credit, sample == F))
 # Carregando pacotes necessarios
 library(caret) 
 library(randomForest) 
+
+# Funcao para selecao das variaveis
+rfe.feature.selection <- function(num_iters=20, features, target){
+  set.seed(69)
+  variable_sizes <- 1:10
+  control <- rfeControl(functions = rfFuncs, method = "cv", 
+                        verbose = FALSE, returnResamp = "all", 
+                        number = num_iters)
+  rfe_results <- rfe(x = features, y = target, 
+                     sizes = variable_sizes, 
+                     rfeControl = control)
+  return(rfe_results)
+}
+
+# Executando a funcao e para obter features mais explicativas
+rfe_results <- rfe.feature.selection(features = train_sample[,-21], 
+                                 target = train_sample[,21])
+
+
+# Visualizando os resultados
+rfe_results
+varImp((rfe_results))
