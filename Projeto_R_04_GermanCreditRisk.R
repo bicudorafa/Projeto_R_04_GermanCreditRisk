@@ -14,10 +14,12 @@ names(Credit) <- c('CheckingAcctStat', 'Duration', 'CreditHistory', 'Purpose', '
                    'Telephone', 'ForeignWorker', 'CreditStatus')
 # Analise do dataframe
 str(Credit)
-## Data Munging
+summary(Credit)
+
+## Data Cleaning
 
 # Definicao variavel de interesse 
-Credit[, 'CreditStatus'] <- factor(as.character(Credit[, 'CreditStatus']), labels = c('Good', 'Bad'))
+Credit[, 'CreditStatus'] <- factor(Credit[, 'CreditStatus'], labels = c('Good', 'Bad'))
 
 # Funcao para automatizar "fatorizacao" das variaveis
 to.factor <- function(df, features) {
@@ -39,6 +41,10 @@ Credit <- to.factor(Credit, categorical_vars)
 
 ## Preparacao dos dados para modelo preditivo
 
+# Carregando pacote necessario e iniciando seed do projeto
+library(caret) 
+set.seed(69)
+
 # Funcao para automatizar normalizacao
 scale.features <- function(df, variables){
   for (variable in variables){
@@ -52,20 +58,18 @@ numeric_vars <- c("Duration", "Age", "CreditAmount")
 scale_Credit <- scale.features(Credit, numeric_vars)
 
 # Separacao dos Sets de Treino e Teste
-set.seed(69)
-sample <- caTools::sample.split(scale_Credit$CreditStatus, SplitRatio = 0.70)
-train_sample <- as.data.frame(subset(Credit, sample == T))
-test_sample <- as.data.frame(subset(Credit, sample == F))
+sample <- createDataPartition(scale_Credit$CreditStatus, times = 1, list = F, p = .7)
+train_sample <- scale_Credit[sample, ]
+test_sample <- scale_Credit[-sample, ]
 
 ## Feature Selection
 
 # Carregando pacotes necessarios
-library(caret) 
-library(randomForest) 
+library(randomForest)
+library(ggplot2)
 
 # Funcao para selecao das variaveis
 rfe.feature.selection <- function(num_iters=20, features, target){
-  set.seed(69)
   variable_sizes <- 1:10
   control <- rfeControl(functions = rfFuncs, method = "cv", 
                         verbose = FALSE, returnResamp = "all", 
@@ -80,7 +84,45 @@ rfe.feature.selection <- function(num_iters=20, features, target){
 rfe_results <- rfe.feature.selection(features = train_sample[,-21], 
                                  target = train_sample[,21])
 
-
 # Visualizando os resultados
 rfe_results
-varImp((rfe_results))
+varImp((rfe_results), scale = T)
+plot(rfe_results, type=c("g", "o"))
+
+# Plot das 8 variaveis mais significantes
+# Atuais: CheckingAcctStat, Duration, OtherInstallments, CreditAmount, CreditHistory, SavingsBonds,
+# Purpose, Age
+
+# Categoricas
+plots_cat<- list()
+for (i in c('CheckingAcctStat', 'CreditHistory','OtherInstallments', 'SavingsBonds', 'Purpose')) {
+  plots_cat[[i]] <- ggplot(Credit, aes_string(x = i, fill = 'CreditStatus')) + 
+  geom_bar(alpha=0.8, colour='black', position = 'dodge') + ggtitle(paste(i, 'x CreditStatus')) +
+  theme_minimal()
+  print(plots_cat[[i]])
+}
+
+# Continua (Duration, CreditAmount, Age)
+plots_cont<- list()
+for (i in c('Duration', 'CreditAmount','Age')) {
+  plots_cont[[i]] <- ggplot(Credit, aes_string(x = 'CreditStatus', y = i, fill = 'CreditStatus')) + 
+    geom_boxplot(alpha=0.8, colour='black', position = 'dodge') + ggtitle(paste(i, 'x CreditStatus')) +
+    theme_classic()
+  print(plots_cont[[i]])
+}
+
+## Comparacao entre modelos sem e com pre processamento
+
+# Construindo um modelo de regressao logistica classico
+glmModel_full <- train(CreditStatus ~ ., data = train_sample, 
+                       family = binomial(),
+                       method = 'glm')
+
+# Visualizando o modelo
+summary(glmModel_full)
+
+# Testando o modelo nos dados de teste
+glmModel_full_pred <-predict(glmModel_full, test_sample)
+
+# Avaliando o modelo
+confusionMatrix(glmModel_full_pred, test_sample$CreditStatus)
