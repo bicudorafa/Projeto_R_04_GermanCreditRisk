@@ -113,16 +113,62 @@ for (i in c('Duration', 'CreditAmount','Age')) {
 
 ## Comparacao entre modelos sem e com pre processamento
 
-# Construindo um modelo de regressao logistica classico
+## Construindo um modelo de classificacao sem tratamento algum
 glmModel_full <- train(CreditStatus ~ ., data = train_sample, 
                        family = binomial(),
-                       method = 'glm')
+                       method = 'glm',
+                       trControl = trainControl(method = 'none'))
 
 # Visualizando o modelo
 summary(glmModel_full)
 
-# Testando o modelo nos dados de teste
-glmModel_full_pred <-predict(glmModel_full, test_sample)
-
 # Avaliando o modelo
+glmModel_full_pred <-predict(glmModel_full, test_sample)
 confusionMatrix(glmModel_full_pred, test_sample$CreditStatus)
+
+## Contrucao dos modelos com tratamento e selecao do melhor modelo
+
+# Criando particoes da data para reutilizar nos cvs
+myFolds <- createFolds(train_sample$CreditStatus, k = 5)
+
+# Controle dos modelos de treino
+train_control <- trainControl(method = "cv", 
+                            index = myFolds, 
+                            returnResamp = "all",
+                            classProbs = TRUE,
+                            summaryFunction = twoClassSummary,
+                            verboseIter = TRUE,
+                            savePredictions = TRUE)
+
+## Glmnet
+
+# Grid para escolher melhores hiper parametros
+tuning_grid <-  expand.grid(alpha =  c(0, 0.5, 1), # indica o peso (0 <- 1) entre L1 e L2
+                        lambda = seq(0.0001, 1, length = 5)) # indica o tamanho da penalidade
+
+# Modelo
+GlmnetModel <- train(CreditStatus ~ ., 
+                  data = train_sample,
+                  metric = "ROC", 
+                  method = "glmnet",
+                  trControl = train_control,
+                  tuneGrid = tuning_grid)
+## Random Forest
+
+RfModel <- train(CreditStatus ~ ., 
+                  data = train_sample,
+                  metric = "ROC", 
+                  method = "ranger",
+                  trControl = train_control)
+
+# Create model_list
+model_list <- list(GLMNET = GlmnetModel, RF = RfModel)
+
+# Pass model_list to resamples(): resamples
+resamples <- resamples(model_list)
+
+# Summarize the results
+summary(resamples)
+
+# Create bwplot
+dotplot(resamples, metric  = "ROC")
