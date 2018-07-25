@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1532294574237.000,
+    "dirty" : false,
+    "encoding" : "ISO8859-1",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "E1B461E5",
+    "lastKnownWriteTime" : 1532494019,
+    "last_content_update" : 1532494019723,
+    "path" : "~/GitHub/Projeto_R_04_GermanCreditRisk/Projeto_R_04_GermanCreditRisk.R",
+    "project_path" : "Projeto_R_04_GermanCreditRisk.R",
+    "properties" : {
+        "cursorPosition" : "165,9",
+        "scrollLine" : "158",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
