@@ -1,0 +1,276 @@
+---
+title: "Risco de Crédito: Como uma Melhor Selecao de Variaveis Pode Ampliar a Eficacia do Modelo"
+author: "Rafael Bicudo Rosa"
+date: "24 de julho de 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+## Como a selecao de variaveis sozinha aumenta a eficacia de um modelo de classificacao qualquer
+
+Este trabalho e uma releitura de um projeto integrante do curso Big Data Analytics com R e Microsoft
+Azure da Formacao Cientista de Dados. O objetivo e usar dados sobre analises de credito realizados na Alemanha, para, atraves de um modelo simples de classificacao para prever a qualidade do credito, ver a variacao de performance com uma melhor selecao de variaveis mais explicativas.
+
+Os dados de credito incluem 1000 observacoes de concessao de credito, cada uma com 21 variaveis, sendo a ultima a classificacao do solicitante (bom ou mau pagador), e as restantes caracteristicas qualitativas e quantitativas sobre esses mesmos. Todas as informacoes foram retiradas do repositorio online da Universidade de Irvine, California (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), assim como uma melhor explicacao do significado das variaveis.
+
+
+## Etapa 1 - Coleta dos Dados
+
+Assim como descrito acima, os dados serão retirados de um repositorio online contendo a base em si no
+formato table, e a informacao de cada uma das caracteristicas. Em seguida, as variaveis serao nomeadas e, por fim, ter-se-a a primeira visao do dataframe.
+
+
+```{r coleta}
+## Obtencao dos dados
+
+# Carrega o dataset antes da transformacao
+german_credit_l <- 'https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data'
+Credit <- read.table(german_credit_l)
+
+# Nome das variaveis
+names(Credit) <- c('CheckingAcctStat', 'Duration', 'CreditHistory', 'Purpose', 'CreditAmount', 
+                   'SavingsBonds', 'Employment', 'InstallmentRatePecnt', 'SexAndStatus', 
+                   'OtherDetorsGuarantors', 'PresentResidenceTime', 'Property', 'Age', 
+                   'OtherInstallments', 'Housing', 'ExistingCreditsAtBank', 'Job', 'NumberDependents', 
+                   'Telephone', 'ForeignWorker', 'CreditStatus')
+
+# Analise do dataframe
+str(Credit)
+summary(Credit)
+
+```
+
+
+## Etapa 2 - Limpeza e Preparacao dos dados
+
+A partir do demonstrado acima, ve-se a existencia de algumas imperfeicoes, como a diferenca de grandezas entre as variaveis quantitativas, e algumas variaveis qualitativas como numericas, portanto se segue a uma etapa de ajustamento dos dados.
+
+```{r normalizando}
+## Data Cleaning
+
+# Definicao variavel de interesse 
+Credit[, 'CreditStatus'] <- factor(Credit[, 'CreditStatus'], labels = c('Good', 'Bad'))
+
+# Funcao para automatizar "fatorizacao" das variaveis
+to.factor <- function(df, features) {
+  for (feature in features) {
+    df[[feature]] <- as.factor(df[[feature]])
+  }
+  return(df)
+}
+
+# Criacao do string vector das variaveis a  serem fatorizadas e sua fatorizacao
+categorical_vars <- c('CheckingAcctStat', 'CreditHistory', 'Purpose', 
+                     'SavingsBonds', 'Employment', 'InstallmentRatePecnt', 'SexAndStatus', 
+                     'OtherDetorsGuarantors', 'PresentResidenceTime', 'Property',  
+                     'OtherInstallments', 'Housing', 'ExistingCreditsAtBank', 'Job', 'NumberDependents', 
+                     'Telephone', 'ForeignWorker', 'CreditStatus')
+
+Credit <- to.factor(Credit, categorical_vars)
+
+# Funcao para automatizar normalizacao
+scale.features <- function(df, variables){
+  for (variable in variables){
+    df[[variable]] <- scale(df[[variable]], center=T, scale=T)
+  }
+  return(df)
+}
+
+# Normalizacao das variaveis
+numeric_vars <- c("Duration", "Age", "CreditAmount")
+scale_Credit <- scale.features(Credit, numeric_vars)
+
+```
+
+
+## Etapa 3 - Dividindo os dados em treino e teste
+
+Com a preparacao dos dados concluida, pode-se prosseguir a separacao dos dados entre treino, para modelagem e exploracao, e teste, para verificacao da aprendizagem.
+
+```{r treinamento}
+# Carregando pacotes necessarios
+library(caret)
+
+# Separacao dos Sets de Treino e Teste
+set.seed(666)
+sample <- createDataPartition(scale_Credit$CreditStatus, times = 1, list = F, p = .6)
+train_sample <- scale_Credit[sample, ]
+test_sample <- scale_Credit[-sample, ]
+
+```
+
+
+## Etapa 4 - Selecao das variaveis
+
+Com todas as transformacoes concluidas, segue-se para o tema principal do projeto: selecao das variaveis mais explicativas. Para executar a tarefa, foi criada uma funcao para aplicar o metodo de selecao de variaveis recursiva usando modelos "Randon Forests", atraves do uso do pacote de Machine Learning Caret. A escolha do metodo se deve ao fato de ser um dos melhores algoritmos para modelos de classificacao. (Para mais informacoes sobre os processos disponiveis, checar a documentacao do pacote Caret: http://topepo.github.io/caret/recursive-feature-elimination.html#backwards-selection)
+
+```{r performance}
+## Feature Selection
+
+# Carregando pacotes necessarios
+library(randomForest)
+library(ggplot2)
+
+# Funcao para selecao das variaveis
+rfe.feature.selection <- function(num_iters=20, features, target){
+  variable_sizes <- 1:10
+  control <- rfeControl(functions = rfFuncs, method = "cv", 
+                        verbose = FALSE, returnResamp = "all", 
+                        number = num_iters)
+  rfe_results <- rfe(x = features, y = target, 
+                     sizes = variable_sizes, 
+                     rfeControl = control)
+  return(rfe_results)
+}
+
+# Executando a funcao e para obter features mais explicativas
+rfe_results <- rfe.feature.selection(features = train_sample[,-21], 
+                                 target = train_sample[,21])
+
+# Selecao das Features mais significates e visualizacao da significancia
+rfe_results
+varImp((rfe_results), scale = F)
+optVariables <- rfe_results[["optVariables"]]
+plot(rfe_results, type=c("g", "o"))
+optVariables
+
+```
+
+O grafico acima demonstra como o poder explicativo do modelo varia atraves da inclusao de mais caracteristicas, chegando ao seu numero ótimo e quais são essas. Para ilustrar melhor seu poder explicativo na pratica, seguem, abaixo, graficos entre as variveis explicativas citadas e nosso alvo.
+
+```{r EDA}
+# Plot das variaveis otimas
+
+# Categoricas
+plots_cat<- list()
+for (i in c('CheckingAcctStat', 'CreditHistory','OtherDetorsGuarantors', 'SavingsBonds', 'Purpose', 
+            'Employment')) {
+  plots_cat[[i]] <- ggplot(Credit, aes_string(x = i, fill = 'CreditStatus')) + 
+  geom_bar(alpha=0.8, colour='black', position = 'dodge') + ggtitle(paste(i, 'x CreditStatus')) +
+  theme_minimal()
+  print(plots_cat[[i]])
+}
+
+# Continua (Duration, CreditAmount, Age)
+plots_cont<- list()
+for (i in c('Duration', 'CreditAmount')) {
+  plots_cont[[i]] <- ggplot(Credit, aes_string(x = 'CreditStatus', y = i, fill = 'CreditStatus')) + 
+    geom_boxplot(alpha=0.8, colour='black', position = 'dodge') + ggtitle(paste(i, 'x CreditStatus')) +
+    theme_classic()
+  print(plots_cont[[i]])
+}
+
+```
+
+
+## Etapa 5 - Criacao do controle dos modelos
+ 
+Para prosseguir a criacao dos modelos de forma isenta, um controle unico sera criado que permitira usar as mesmas validacoes cruzadas em ambos os testes.
+ 
+```{r controle}
+# Controles para certificar testes imparciais
+
+# Particoes da data para reutilizar nos cvs
+myFolds <- createFolds(train_sample$CreditStatus, k = 5)
+
+# Controle dos modelos de treino
+train_control <- trainControl(method = "cv", 
+                              index = myFolds, 
+                              returnResamp = "all",
+                              classProbs = TRUE,
+                              summaryFunction = twoClassSummary,
+                              verboseIter = TRUE,
+                              savePredictions = TRUE)
+```
+
+
+## Etapa 6 - Execucao dos Modelos
+
+
+```{r modelos, results = "hide", warning = FALSE}
+## Modelo de classificacao sem feature selection
+glmModel_full <- train(CreditStatus ~ ., data = train_sample,
+                       method = 'glm',
+                       metric = "ROC",
+                       trControl = train_control)
+
+# Predicao 1
+glmModel_full_pred <-predict(glmModel_full, test_sample)
+
+## Modelo de classificacao com feature selection
+glmModel_fs <- train(CreditStatus ~ 
+                       CheckingAcctStat +
+                       Duration + 
+                       OtherDetorsGuarantors +
+                       CreditAmount +
+                       CreditHistory +    
+                       SavingsBonds +
+                       Purpose +
+                       Employment, 
+                       data = train_sample,
+                       method = 'glm',
+                       metric = "ROC",
+                       trControl = train_control)
+
+# Avaliacao 2
+glmModel_fs_pred <-predict(glmModel_fs, test_sample)
+
+```
+
+
+## Etapa 7 - Tabelas de Confusao
+
+```{r confusion matrix}
+confusionMatrix(glmModel_full_pred, test_sample$CreditStatus)
+confusionMatrix(glmModel_fs_pred, test_sample$CreditStatus)
+
+```
+
+
+Apos a rapida analise das Tabelas de Confusao, nota-se a melhora dos indicadores de qualidade dos modelos.
+
+## Etapa 8 - Curva ROC e avaliacao final do modelo
+
+```{r curva}
+## Comparacao dos 2 modelos
+
+## Plotagem das ROC Curves
+
+# Pacote necesario
+library(ROCR)
+
+# Lista com as predicoes
+full_pred <- predict(glmModel_full, newdata = test_sample, type = "prob")
+fs_pred <- predict(glmModel_fs, newdata = test_sample, type = "prob")
+pred_list <- list(full_pred$Good, fs_pred$Good)
+
+# Lista dos valores de fato (mesmo para todos)
+m <- length(pred_list)
+test_list <- rep(list(test_sample$CreditStatus), m)
+
+# ROC curves
+pred <- prediction(pred_list, test_list)
+rocs <- performance(pred, "tpr", "fpr")
+plot(rocs, col = as.list(1:m), main = "Test Set ROC Curves")
+legend(x = "bottomright", 
+       legend = c("All_Features", "Feature_Selection"),
+       fill = 1:m)
+
+# Lista dos modelos
+model_list <- list(All_Features = glmModel_full, Feature_Selection = glmModel_fs)
+
+# Uso da funcao resamples
+resamples <- resamples(model_list)
+
+# Dotplot
+dotplot(resamples, metric  = "ROC")
+
+```
+
+Por fim ontem-se as representacoes graficas das ROC Curves de cada um dos modelos. Ao se analisar sua forma sobreposta, fica dificil de se extrair qualquer conclusao clara, no entanto, com o auxilios da funcao 'resamples', torna-se possivel fazer uma comparacao mais concisa a partir de cada uma das validacoes cruzadas usadas. Assim se consegue ter uma ideia mais clara de como somente uma selecao mais apurada de variaveis pode alterar a performance do modelo.
+
+## Fim
+## www.datascienceacademy.com.br
