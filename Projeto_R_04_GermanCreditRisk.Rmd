@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 
 O objetivo deste trabalho é usar dados sobre análises de crédito realizadas na Alemanha, executar uma análise exploratória, construir uma série de modelos de classificação baseados nessa, observar como a melhor seleção de variaveis afeta a performance e escolher o mais preciso.
 
-Modelos de aprendizado de máquina sobre condições de pagamento são de importância fundamental a qualquer negócio do setor financeiro. Emobora nunca sejam perfeitos, podem poupar horas de trabalho ao pré-selecionar possíveis maus pagadores para uma análise mais rebuscada de forma muito eficiente e sob custo muito baixo.
+Modelos de aprendizado de máquina sobre condições de pagamento são de importância fundamental a qualquer negócio do setor financeiro. Embora nunca sejam perfeitos, podem poupar horas de trabalho, sob custo muito baixo, ao pré-selecionar possíveis maus pagadores para uma análise mais rebuscada de forma muito eficiente.
 
 Os dados incluem 1000 observações de concessão de crédito, cada uma com 21 variáveis, sendo a última a classificação do solicitante (bom ou mau pagador), e as restantes características qualitativas e quantitativas sobre esses mesmos. Todas as informacões foram retiradas do repositório online da Universidade de Irvine, Califórnia (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), assim como uma melhor explicação do significado das variáveis.
 
@@ -142,7 +142,12 @@ optVariables
 
 ```
 
+
+
 O gráfico acima demonstra como o poder explicativo do modelo varia através da inclusão de mais características até chegar ao seu número ótimo. Para ilustrar melhor seu poder explicativo na prática, seguem, abaixo, gráficos entre as váriveis explicativas citadas e nosso alvo.
+
+
+
 
 ```{r EDA}
 # Plot das variaveis otimas
@@ -173,7 +178,7 @@ for (i in c('Duration', 'CreditAmount')) {
  
 Após terminar a análise exploratória, prossegue-se à criação do modelo base: contendo todas as variáveis e sem nenhuma transformação, será usado como referência para os próximos.
  
-```{r simples}
+ ```{r simples}
 ## Regressao Classica
 SimpleModel <- train(CreditStatus ~ ., data = train_sample, 
                      family = binomial(),
