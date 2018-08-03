@@ -1,5 +1,5 @@
 ---
-title: "Risco de Crédito: Como uma Melhor Selecao de Variaveis Pode Ampliar a Eficacia do Modelo"
+title: "Risco de Crédito: Como uma Melhor Seleção de Variáveis Pode Ampliar a Eficácia das Previsões"
 author: "Rafael Bicudo Rosa"
 date: "24 de julho de 2018"
 output: pdf_document
@@ -9,18 +9,17 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
-## Como a selecao de variaveis sozinha aumenta a eficacia de um modelo de classificacao qualquer
+## Como a seleção de variáveis pode aumentar a eficácia de um modelo
 
-Este trabalho e uma releitura de um projeto integrante do curso Big Data Analytics com R e Microsoft
-Azure da Formacao Cientista de Dados. O objetivo e usar dados sobre analises de credito realizados na Alemanha, para, atraves de um modelo simples de classificacao para prever a qualidade do credito, ver a variacao de performance com uma melhor selecao de variaveis mais explicativas.
+O objetivo deste trabalho é usar dados sobre análises de crédito realizadas na Alemanha, executar uma análise exploratória, construir uma série de modelos de classificação baseados nessa, observar como a melhor seleção de variaveis afeta a performance e escolher o mais preciso.
 
-Os dados de credito incluem 1000 observacoes de concessao de credito, cada uma com 21 variaveis, sendo a ultima a classificacao do solicitante (bom ou mau pagador), e as restantes caracteristicas qualitativas e quantitativas sobre esses mesmos. Todas as informacoes foram retiradas do repositorio online da Universidade de Irvine, California (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), assim como uma melhor explicacao do significado das variaveis.
+Os dados incluem 1000 observações de concessão de crédito, cada uma com 21 variáveis, sendo a última a classificação do solicitante (bom ou mau pagador), e as restantes características qualitativas e quantitativas sobre esses mesmos. Todas as informacões foram retiradas do repositório online da Universidade de Irvine, Califórnia (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), assim como uma melhor explicação do significado das variáveis.
 
 
 ## Etapa 1 - Coleta dos Dados
 
-Assim como descrito acima, os dados serão retirados de um repositorio online contendo a base em si no
-formato table, e a informacao de cada uma das caracteristicas. Em seguida, as variaveis serao nomeadas e, por fim, ter-se-a a primeira visao do dataframe.
+Assim como descrito acima, os dados serão retirados de um repositório online contendo a base em si no
+formato table, e as informações de cada uma das características. Em seguida, as variáveis serão nomeadas e, por fim, ter-se-á a primeira visão do dataframe.
 
 
 ```{r coleta}
@@ -44,9 +43,9 @@ summary(Credit)
 ```
 
 
-## Etapa 2 - Limpeza e Preparacao dos dados
+## Etapa 2 - Limpeza e Preparação dos dados
 
-A partir do demonstrado acima, ve-se a existencia de algumas imperfeicoes, como a diferenca de grandezas entre as variaveis quantitativas, e algumas variaveis qualitativas como numericas, portanto se segue a uma etapa de ajustamento dos dados.
+A partir do demonstrado acima, vê-se a existência de alguns pontos de atenção: a diferenca de grandezas entre as variáveis quantitativas, e algumas variáveis qualitativas como numéricas. Ambos podem levar a viéses ruins ou inconsistências em modelos preditivos, portanto se segue a uma etapa de ajustamento dos dados.
 
 ```{r normalizando}
 ## Data Cleaning
@@ -88,7 +87,7 @@ scale_Credit <- scale.features(Credit, numeric_vars)
 
 ## Etapa 3 - Dividindo os dados em treino e teste
 
-Com a preparacao dos dados concluida, pode-se prosseguir a separacao dos dados entre treino, para modelagem e exploracao, e teste, para verificacao da aprendizagem.
+Com a preparacao dos dados concluída, pode-se prosseguir a separação dos dados entre treino, para modelagem e exploração, e teste, para validação da aprendizagem.
 
 ```{r treinamento}
 # Carregando pacotes necessarios
@@ -105,7 +104,9 @@ test_sample <- scale_Credit[-sample, ]
 
 ## Etapa 4 - Selecao das variaveis
 
-Com todas as transformacoes concluidas, segue-se para o tema principal do projeto: selecao das variaveis mais explicativas. Para executar a tarefa, foi criada uma funcao para aplicar o metodo de selecao de variaveis recursiva usando modelos "Randon Forests", atraves do uso do pacote de Machine Learning Caret. A escolha do metodo se deve ao fato de ser um dos melhores algoritmos para modelos de classificacao. (Para mais informacoes sobre os processos disponiveis, checar a documentacao do pacote Caret: http://topepo.github.io/caret/recursive-feature-elimination.html#backwards-selection)
+Com todas as transformações concluídas, segue-se para a seleção das variáveis mais explicativas. Para executar a tarefa, foi criada uma função para aplicar o método de seleção recursiva usando "Randon Forests", através do uso do pacote de Machine Learning Caret (usado ao longo de todo trabalho inclusive). 
+
+O método consiste nas iterações de vários modelos, a começar pelo pleno, testando várias combinações retirando-se algumas variáveis, e comparando seus poderes explicativos. Por sua vez, o algoritmo de referência para o processo é um dos modelos de classificação mais eficientes da atualidade. (Para mais informacoes sobre os processos disponiveis, checar a documentacao do pacote Caret: http://topepo.github.io/caret/recursive-feature-elimination.html#backwards-selection)
 
 ```{r performance}
 ## Feature Selection
@@ -139,7 +140,7 @@ optVariables
 
 ```
 
-O grafico acima demonstra como o poder explicativo do modelo varia atraves da inclusao de mais caracteristicas, chegando ao seu numero ótimo e quais são essas. Para ilustrar melhor seu poder explicativo na pratica, seguem, abaixo, graficos entre as variveis explicativas citadas e nosso alvo.
+O gráfico acima demonstra como o poder explicativo do modelo varia através da inclusão de mais características até chegar ao seu número ótimo. Para ilustrar melhor seu poder explicativo na prática, seguem, abaixo, gráficos entre as váriveis explicativas citadas e nosso alvo.
 
 ```{r EDA}
 # Plot das variaveis otimas
@@ -166,111 +167,119 @@ for (i in c('Duration', 'CreditAmount')) {
 ```
 
 
-## Etapa 5 - Criacao do controle dos modelos
+## Etapa 5 - Criacao do Modelo de Referência
  
-Para prosseguir a criacao dos modelos de forma isenta, um controle unico sera criado que permitira usar as mesmas validacoes cruzadas em ambos os testes.
+Após terminar a análise exploratória, prossegue-se à criação do modelo base: contendo todas as variáveis e sem nenhuma transformação, será usado como referência para os próximos.
  
-```{r controle}
-# Controles para certificar testes imparciais
+```{r simples}
+## Regressao Classica
+SimpleModel <- train(CreditStatus ~ ., data = train_sample, 
+                     family = binomial(),
+                     method = 'glm',
+                     trControl = trainControl(method = 'none'))
 
-# Particoes da data para reutilizar nos cvs
-myFolds <- createFolds(train_sample$CreditStatus, k = 5)
+# Avaliando o modelo
+SimpleModel_pred <-predict(SimpleModel, test_sample)
+confusionMatrix(SimpleModel_pred, test_sample$CreditStatus)
+```
+
+
+## Etapa 6 - Execução dos Modelos
+
+
+Por fim, chega-se à motivação do trabalho: selecionar o modelo com o melhor poder de classificar bons e maus pagadores. Como a amostra de treino não é tão grande, usam-se validações cruzadas repetidas (geradas a partir de bootstrap) para aumentá-la artificialmente. Só serão consideradas as características com maior poder explicativo selecionadas anteriormente para garantir a máxima eficiência. A métrica escolhida foi 'ROC', pois, como o problema é de classificação, ela é mais indicada por usar a taxa entre falsos e verdadeiros positivos.
+
+```{r modelos, results = "hide", warning = FALSE}
+# Melhores Variaveis
+FS_formula = as.formula(CreditStatus ~ CheckingAcctStat + Duration + OtherDetorsGuarantors +CreditAmount +
+  CreditHistory + SavingsBonds + Purpose + Employment)
 
 # Controle dos modelos de treino
-train_control <- trainControl(method = "cv", 
-                              index = myFolds, 
+train_control <- trainControl(method="repeatedcv", 
+                              number=10, 
+                              repeats=3, 
                               returnResamp = "all",
                               classProbs = TRUE,
                               summaryFunction = twoClassSummary,
                               verboseIter = TRUE,
                               savePredictions = TRUE)
+
+## Modelos com tratamento
+
+# Glm com melhores variaveis
+FSModel <- glmModel_fs <- train(FS_formula, 
+                                data = train_sample,
+                                method = 'glm',
+                                metric = "ROC",
+                                trControl = train_control)
+
+## Glmnet
+
+# Grid para escolher melhores hiper parametros
+tuning_grid_glm <-  expand.grid(alpha =  c(0, 0.25, 0.75, 1), # indica o peso (0 <- 1) entre L1 e L2
+                                lambda = seq(0.0001, 1, length = 5)) # indica o tamanho da penalidade
+
+# Modelo
+GlmnetModel <- train(FS_formula, 
+                     data = train_sample,
+                     metric = "ROC", 
+                     method = "glmnet",
+                     trControl = train_control,
+                     tuneGrid = tuning_grid_glm)
+
+## Random Forest
+
+# Grid para escolher melhores hiper parametros (no caso, so mtry - resto e default)
+tuning_grid_rf <- expand.grid(.mtry = c(2, 4, 6, 8),.splitrule = "gini", .min.node.size = 1)
+
+# Modelo
+RfModel <- train(FS_formula, 
+                 data = train_sample,
+                 metric = "ROC", 
+                 method = "ranger",
+                 trControl = train_control,
+                 tuneGrid = tuning_grid_rf)
+
+## KNN
+
+# Grid para escolher melhores hiper parametros (no caso, so mtry - resto e default)
+tuning_grid_knn <- expand.grid(.k = 1:25)
+
+# Modelo
+KnnModel <- train(FS_formula, 
+                  data = train_sample,
+                  metric = "ROC", 
+                  method = "knn",
+                  trControl = train_control,
+                  tuneGrid = tuning_grid_knn)
 ```
 
-
-## Etapa 6 - Execucao dos Modelos
-
-
-```{r modelos, results = "hide", warning = FALSE}
-## Modelo de classificacao sem feature selection
-glmModel_full <- train(CreditStatus ~ ., data = train_sample,
-                       method = 'glm',
-                       metric = "ROC",
-                       trControl = train_control)
-
-# Predicao 1
-glmModel_full_pred <-predict(glmModel_full, test_sample)
-
-## Modelo de classificacao com feature selection
-glmModel_fs <- train(CreditStatus ~ 
-                       CheckingAcctStat +
-                       Duration + 
-                       OtherDetorsGuarantors +
-                       CreditAmount +
-                       CreditHistory +    
-                       SavingsBonds +
-                       Purpose +
-                       Employment, 
-                       data = train_sample,
-                       method = 'glm',
-                       metric = "ROC",
-                       trControl = train_control)
-
-# Avaliacao 2
-glmModel_fs_pred <-predict(glmModel_fs, test_sample)
-
-```
+Assim como visto acima, foram selecionados 4 algorítmos de classificação muito utilizados: GLM, GLMNET, RF e KNN. O primeiro é o mais simples, sendo o mesmo utilizado para controle; o segundo é uma versão mais sofisticada deste que utiliza as penalidade conhecidas como L1 e L2; o terceiro é o já mencionado "Random Forests"; e o quarto é um "K-Nearest Neighbors", que se baseia em observações similares para se chegar a uma classificação. Nos 3 últimos, por serem mais complexos, pode-se executar a escolha de hiper-parâmetros com o intuito de melhorar ainda mais o desempenho. Para otimizar essa opção, usa-se o recurso "expand.grid" que compara diferentes combinações deles.
 
 
-## Etapa 7 - Tabelas de Confusao
+## Etapa 7 - Análise dos Resultados
 
-```{r confusion matrix}
-confusionMatrix(glmModel_full_pred, test_sample$CreditStatus)
-confusionMatrix(glmModel_fs_pred, test_sample$CreditStatus)
+Após o ajustamento dos modelos, faz-se uma comparação da sua métrica utilizada para descobrir qual possui a melhor performance no treino.
 
-```
+```{r dotplot}
+# Lista com os modelos
+model_list <- list(GLM_FS = FSModel, GLMNET = GlmnetModel, RF = RfModel, KNN = KnnModel)
 
-
-Apos a rapida analise das Tabelas de Confusao, nota-se a melhora dos indicadores de qualidade dos modelos.
-
-## Etapa 8 - Curva ROC e avaliacao final do modelo
-
-```{r curva}
-## Comparacao dos 2 modelos
-
-## Plotagem das ROC Curves
-
-# Pacote necesario
-library(ROCR)
-
-# Lista com as predicoes
-full_pred <- predict(glmModel_full, newdata = test_sample, type = "prob")
-fs_pred <- predict(glmModel_fs, newdata = test_sample, type = "prob")
-pred_list <- list(full_pred$Good, fs_pred$Good)
-
-# Lista dos valores de fato (mesmo para todos)
-m <- length(pred_list)
-test_list <- rep(list(test_sample$CreditStatus), m)
-
-# ROC curves
-pred <- prediction(pred_list, test_list)
-rocs <- performance(pred, "tpr", "fpr")
-plot(rocs, col = as.list(1:m), main = "Test Set ROC Curves")
-legend(x = "bottomright", 
-       legend = c("All_Features", "Feature_Selection"),
-       fill = 1:m)
-
-# Lista dos modelos
-model_list <- list(All_Features = glmModel_full, Feature_Selection = glmModel_fs)
-
-# Uso da funcao resamples
+# Função resamples para compará-los
 resamples <- resamples(model_list)
 
-# Dotplot
-dotplot(resamples, metric  = "ROC")
+# dotplot
+dotplot(resamples, metric = 'ROC')
 
+# Previsao dos melhores
+GlmnetModel_pred <-predict(GlmnetModel, test_sample)
+FSModel_pred <- predict(FSModel, test_sample)
+confusionMatrix(GlmnetModel_pred, test_sample$CreditStatus)
+confusionMatrix(FSModel_pred, test_sample$CreditStatus)
 ```
 
-Por fim ontem-se as representacoes graficas das ROC Curves de cada um dos modelos. Ao se analisar sua forma sobreposta, fica dificil de se extrair qualquer conclusao clara, no entanto, com o auxilios da funcao 'resamples', torna-se possivel fazer uma comparacao mais concisa a partir de cada uma das validacoes cruzadas usadas. Assim se consegue ter uma ideia mais clara de como somente uma selecao mais apurada de variaveis pode alterar a performance do modelo.
+Como se pode observar acima, os modelos GLM's obtiveram melhor desempenho dentre os outros. Resultado também observado nas suas tabelas de confusão: houve uma melhora na acurácia de 2.48 %, no entanto o mais incrível é constatar como o modelo mais simples possui tanta capacidade. 
+
+Vale ressaltar como há espaço para muitas outras melhorias, como a criação de novas variáveis a partir das originais ou outros algorítmos de classificação, no entanto o objetivo principal do trabalho foi demonstrar como somente uma melhor escolha de variáveis pode, por vezes, ser um fator muito mais relevante para performance do que o uso de modelos super complexos.
 
 ## Fim
-## www.datascienceacademy.com.br

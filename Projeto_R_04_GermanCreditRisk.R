@@ -32,10 +32,10 @@ to.factor <- function(df, features) {
 
 # Criacao do string vector das variaveis a  serem fatorizadas e sua fatorizacao
 categorical_vars <- c('CheckingAcctStat', 'CreditHistory', 'Purpose', 
-                     'SavingsBonds', 'Employment', 'InstallmentRatePecnt', 'SexAndStatus', 
-                     'OtherDetorsGuarantors', 'PresentResidenceTime', 'Property',  
-                     'OtherInstallments', 'Housing', 'ExistingCreditsAtBank', 'Job', 'NumberDependents', 
-                     'Telephone', 'ForeignWorker', 'CreditStatus')
+                      'SavingsBonds', 'Employment', 'InstallmentRatePecnt', 'SexAndStatus', 
+                      'OtherDetorsGuarantors', 'PresentResidenceTime', 'Property',  
+                      'OtherInstallments', 'Housing', 'ExistingCreditsAtBank', 'Job', 'NumberDependents', 
+                      'Telephone', 'ForeignWorker', 'CreditStatus')
 
 Credit <- to.factor(Credit, categorical_vars)
 
@@ -82,7 +82,7 @@ rfe.feature.selection <- function(num_iters=20, features, target){
 
 # Executando a funcao e para obter features mais explicativas
 rfe_results <- rfe.feature.selection(features = train_sample[,-21], 
-                                 target = train_sample[,21])
+                                     target = train_sample[,21])
 
 # Selecao das Features mais significates e visualizacao da significancia
 rfe_results
@@ -98,8 +98,8 @@ plots_cat<- list()
 for (i in c('CheckingAcctStat', 'CreditHistory','OtherDetorsGuarantors', 'SavingsBonds', 'Purpose', 
             'Employment')) {
   plots_cat[[i]] <- ggplot(Credit, aes_string(x = i, fill = 'CreditStatus')) + 
-  geom_bar(alpha=0.8, colour='black', position = 'dodge') + ggtitle(paste(i, 'x CreditStatus')) +
-  theme_minimal()
+    geom_bar(alpha=0.8, colour='black', position = 'dodge') + ggtitle(paste(i, 'x CreditStatus')) +
+    theme_minimal()
   print(plots_cat[[i]])
 }
 
@@ -114,81 +114,93 @@ for (i in c('Duration', 'CreditAmount')) {
 
 ## Comparacao entre modelos com e sem feature selection
 
-# Controles para certificar testes imparciais
+## Regressao Classica
+SimpleModel <- train(CreditStatus ~ ., data = train_sample, 
+                     family = binomial(),
+                     method = 'glm',
+                     trControl = trainControl(method = 'none'))
 
-# Particoes da data para reutilizar nos cvs
-myFolds <- createFolds(train_sample$CreditStatus, k = 5)
+# Avaliando o modelo
+SimpleModel_pred <-predict(SimpleModel, test_sample)
+confusionMatrix(SimpleModel_pred, test_sample$CreditStatus)
+
+# Melhores Variaveis
+FS_formula = as.formula(CreditStatus ~ CheckingAcctStat + Duration + OtherDetorsGuarantors +CreditAmount +
+                          CreditHistory + SavingsBonds + Purpose + Employment)
 
 # Controle dos modelos de treino
-train_control <- trainControl(method = "cv", 
-                              index = myFolds, 
+train_control <- trainControl(method="repeatedcv", 
+                              number=10, 
+                              repeats=3, 
                               returnResamp = "all",
                               classProbs = TRUE,
                               summaryFunction = twoClassSummary,
                               verboseIter = TRUE,
                               savePredictions = TRUE)
 
-## Modelo de classificacao sem feature selection
-glmModel_full <- train(CreditStatus ~ ., data = train_sample,
-                       method = 'glm',
-                       metric = "ROC",
-                       trControl = train_control)
+## Modelos com tratamento
 
-# Avaliacao 1
-glmModel_full_pred <-predict(glmModel_full, test_sample)
-confusionMatrix(glmModel_full_pred, test_sample$CreditStatus)
+# Glm com melhores variaveis
+FSModel <- glmModel_fs <- train(FS_formula, 
+                                data = train_sample,
+                                method = 'glm',
+                                metric = "ROC",
+                                trControl = train_control)
 
-## Modelo de classificacao com feature selection
-glmModel_fs <- train(CreditStatus ~ 
-                       CheckingAcctStat +
-                       Duration + 
-                       OtherDetorsGuarantors +
-                       CreditAmount +
-                       CreditHistory +    
-                       SavingsBonds +
-                       Purpose +
-                       Employment, 
-                       data = train_sample,
-                       method = 'glm',
-                       metric = "ROC",
-                       trControl = train_control)
+## Glmnet
 
-# Avaliacao 2
-glmModel_fs_pred <-predict(glmModel_fs, test_sample)
-confusionMatrix(glmModel_fs_pred, test_sample$CreditStatus)
+# Grid para escolher melhores hiper parametros
+tuning_grid_glm <-  expand.grid(alpha =  c(0, 0.25, 0.75, 1), # indica o peso (0 <- 1) entre L1 e L2
+                                lambda = seq(0.0001, 1, length = 5)) # indica o tamanho da penalidade
 
-## Comparacao dos 2 modelos
+# Modelo
+GlmnetModel <- train(FS_formula, 
+                     data = train_sample,
+                     metric = "ROC", 
+                     method = "glmnet",
+                     trControl = train_control,
+                     tuneGrid = tuning_grid_glm)
 
-# Lista dos modelos
-model_list <- list(All_Features = glmModel_full, Feature_Selection = glmModel_fs)
+## Random Forest
+
+# Grid para escolher melhores hiper parametros (no caso, so mtry - resto e default)
+tuning_grid_rf <- expand.grid(.mtry = c(2, 4, 6, 8),.splitrule = "gini", .min.node.size = 1)
+
+# Modelo
+RfModel <- train(FS_formula, 
+                 data = train_sample,
+                 metric = "ROC", 
+                 method = "ranger",
+                 trControl = train_control,
+                 tuneGrid = tuning_grid_rf)
+
+## KNN
+
+# Grid para escolher melhores hiper parametros (no caso, so mtry - resto e default)
+tuning_grid_knn <- expand.grid(.k = 1:25)
+
+# Modelo
+KnnModel <- train(FS_formula, 
+                  data = train_sample,
+                  metric = "ROC", 
+                  method = "knn",
+                  trControl = train_control,
+                  tuneGrid = tuning_grid_knn)
+
+# Create model_list
+model_list <- list(GLM_FS = FSModel, GLMNET = GlmnetModel, RF = RfModel, KNN = KnnModel)
 
 # Pass model_list to resamples(): resamples
 resamples <- resamples(model_list)
 
 # Summarize the results
-summary(resamples)
+#summary(resamples)
 
-# Create dotplot
-dotplot(resamples, metric  = "ROC")
+# Create bwplot
+dotplot(resamples, metric = 'ROC')
 
-## Plotagem das ROC Curves
-
-# Pacote necesario
-library(ROCR)
-
-# Lista com as predicoes
-full_pred <- predict(glmModel_full, newdata = test_sample, type = "prob")
-fs_pred <- predict(glmModel_fs, newdata = test_sample, type = "prob")
-pred_list <- list(full_pred$Good, fs_pred$Good)
-
-# Lista dos valores de fato (mesmo para todos)
-m <- length(pred_list)
-test_list <- rep(list(test_sample$CreditStatus), m)
-
-# ROC curves
-pred <- prediction(pred_list, test_list)
-rocs <- performance(pred, "tpr", "fpr")
-plot(rocs, col = as.list(1:m), main = "Test Set ROC Curves")
-legend(x = "bottomright", 
-       legend = c("All_Features", "Feature_Selection"),
-       fill = 1:m)
+# Previsao dos melhores
+GlmnetModel_pred <-predict(GlmnetModel, test_sample)
+FSModel_pred <- predict(FSModel, test_sample)
+confusionMatrix(GlmnetModel_pred, test_sample$CreditStatus)
+confusionMatrix(FSModel_pred, test_sample$CreditStatus)
