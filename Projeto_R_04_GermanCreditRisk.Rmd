@@ -1,5 +1,5 @@
 ---
-title: "Risco de CrÈdito: Como uma Melhor SeleÁ„o de Vari·veis Pode Ampliar a Efic·cia das Previsıes"
+title: "Risco de Cr√©dito: Como uma Melhor Sele√ß√£o de Vari√°veis Pode Ampliar a Efic√°cia das Previs√µes"
 author: "Rafael Bicudo Rosa"
 date: "24 de julho de 2018"
 output: pdf_document
@@ -9,17 +9,19 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
-## Como a seleÁ„o de vari·veis pode aumentar a efic·cia de um modelo
+## Como a sele√ß√£o de vari√°veis pode aumentar a efic√°cia de um modelo
 
-O objetivo deste trabalho È usar dados sobre an·lises de crÈdito realizadas na Alemanha, executar uma an·lise exploratÛria, construir uma sÈrie de modelos de classificaÁ„o baseados nessa, observar como a melhor seleÁ„o de variaveis afeta a performance e escolher o mais preciso.
+O objetivo deste trabalho √© usar dados sobre an√°lises de cr√©dito realizadas na Alemanha, executar uma an√°lise explorat√≥ria, construir uma s√©rie de modelos de classifica√ß√£o baseados nessa, observar como a melhor sele√ß√£o de variaveis afeta a performance e escolher o mais preciso.
 
-Os dados incluem 1000 observaÁıes de concess„o de crÈdito, cada uma com 21 vari·veis, sendo a ˙ltima a classificaÁ„o do solicitante (bom ou mau pagador), e as restantes caracterÌsticas qualitativas e quantitativas sobre esses mesmos. Todas as informacıes foram retiradas do repositÛrio online da Universidade de Irvine, CalifÛrnia (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), assim como uma melhor explicaÁ„o do significado das vari·veis.
+Modelos de aprendizado de m√°quina sobre condi√ß√µes de pagamento s√£o de import√¢ncia fundamental a qualquer neg√≥cio do setor financeiro. Emobora nunca sejam perfeitos, podem poupar horas de trabalho ao pr√©-selecionar poss√≠veis maus pagadores para uma an√°lise mais rebuscada de forma muito eficiente e sob custo muito baixo.
+
+Os dados incluem 1000 observa√ß√µes de concess√£o de cr√©dito, cada uma com 21 vari√°veis, sendo a √∫ltima a classifica√ß√£o do solicitante (bom ou mau pagador), e as restantes caracter√≠sticas qualitativas e quantitativas sobre esses mesmos. Todas as informac√µes foram retiradas do reposit√≥rio online da Universidade de Irvine, Calif√≥rnia (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), assim como uma melhor explica√ß√£o do significado das vari√°veis.
 
 
 ## Etapa 1 - Coleta dos Dados
 
-Assim como descrito acima, os dados ser„o retirados de um repositÛrio online contendo a base em si no
-formato table, e as informaÁıes de cada uma das caracterÌsticas. Em seguida, as vari·veis ser„o nomeadas e, por fim, ter-se-· a primeira vis„o do dataframe.
+Assim como descrito acima, os dados ser√£o retirados de um reposit√≥rio online contendo a base em si no
+formato table, e as informa√ß√µes de cada uma das caracter√≠sticas. Em seguida, as vari√°veis ser√£o nomeadas e, por fim, ter-se-√° a primeira vis√£o do dataframe.
 
 
 ```{r coleta}
@@ -43,9 +45,9 @@ summary(Credit)
 ```
 
 
-## Etapa 2 - Limpeza e PreparaÁ„o dos dados
+## Etapa 2 - Limpeza e Prepara√ß√£o dos dados
 
-A partir do demonstrado acima, vÍ-se a existÍncia de alguns pontos de atenÁ„o: a diferenca de grandezas entre as vari·veis quantitativas, e algumas vari·veis qualitativas como numÈricas. Ambos podem levar a viÈses ruins ou inconsistÍncias em modelos preditivos, portanto se segue a uma etapa de ajustamento dos dados.
+A partir do demonstrado acima, v√™-se a exist√™ncia de alguns pontos de aten√ß√£o: a diferenca de grandezas entre as vari√°veis quantitativas, e algumas vari√°veis qualitativas como num√©ricas. Ambos podem levar a vi√©ses ruins ou inconsist√™ncias em modelos preditivos, portanto se segue a uma etapa de ajustamento dos dados.
 
 ```{r normalizando}
 ## Data Cleaning
@@ -87,7 +89,7 @@ scale_Credit <- scale.features(Credit, numeric_vars)
 
 ## Etapa 3 - Dividindo os dados em treino e teste
 
-Com a preparacao dos dados concluÌda, pode-se prosseguir a separaÁ„o dos dados entre treino, para modelagem e exploraÁ„o, e teste, para validaÁ„o da aprendizagem.
+Com a preparacao dos dados conclu√≠da, pode-se prosseguir a separa√ß√£o dos dados entre treino, para modelagem e explora√ß√£o, e teste, para valida√ß√£o da aprendizagem.
 
 ```{r treinamento}
 # Carregando pacotes necessarios
@@ -102,11 +104,11 @@ test_sample <- scale_Credit[-sample, ]
 ```
 
 
-## Etapa 4 - Selecao das variaveis
+## Etapa 4 - Sele√ß√£o das vari√°veis
 
-Com todas as transformaÁıes concluÌdas, segue-se para a seleÁ„o das vari·veis mais explicativas. Para executar a tarefa, foi criada uma funÁ„o para aplicar o mÈtodo de seleÁ„o recursiva usando "Randon Forests", atravÈs do uso do pacote de Machine Learning Caret (usado ao longo de todo trabalho inclusive). 
+Com todas as transforma√ß√µes conclu√≠das, segue-se para a sele√ß√£o das vari√°veis mais explicativas. Para executar a tarefa, foi criada uma fun√ß√£o para aplicar o m√©todo de sele√ß√£o recursiva usando "Randon Forests", atrav√©s do uso do pacote de Machine Learning Caret (usado ao longo de todo trabalho inclusive). 
 
-O mÈtodo consiste nas iteraÁıes de v·rios modelos, a comeÁar pelo pleno, testando v·rias combinaÁıes retirando-se algumas vari·veis, e comparando seus poderes explicativos. Por sua vez, o algoritmo de referÍncia para o processo È um dos modelos de classificaÁ„o mais eficientes da atualidade. (Para mais informacoes sobre os processos disponiveis, checar a documentacao do pacote Caret: http://topepo.github.io/caret/recursive-feature-elimination.html#backwards-selection)
+O m√©todo consiste em itera√ß√µes de v√°rios modelos, a come√ßar pelo pleno, testando v√°rias combina√ß√µes retirando-se algumas vari√°veis, e comparando seus poderes explicativos. Por sua vez, o algoritmo de refer√™ncia para o processo √© um dos modelos de classifica√ß√£o mais eficientes da atualidade. (Para mais informacoes sobre os processos disponiveis, checar a documentacao do pacote Caret: http://topepo.github.io/caret/recursive-feature-elimination.html#backwards-selection)
 
 ```{r performance}
 ## Feature Selection
@@ -140,7 +142,7 @@ optVariables
 
 ```
 
-O gr·fico acima demonstra como o poder explicativo do modelo varia atravÈs da inclus„o de mais caracterÌsticas atÈ chegar ao seu n˙mero Ûtimo. Para ilustrar melhor seu poder explicativo na pr·tica, seguem, abaixo, gr·ficos entre as v·riveis explicativas citadas e nosso alvo.
+O gr√°fico acima demonstra como o poder explicativo do modelo varia atrav√©s da inclus√£o de mais caracter√≠sticas at√© chegar ao seu n√∫mero √≥timo. Para ilustrar melhor seu poder explicativo na pr√°tica, seguem, abaixo, gr√°ficos entre as v√°riveis explicativas citadas e nosso alvo.
 
 ```{r EDA}
 # Plot das variaveis otimas
@@ -167,9 +169,9 @@ for (i in c('Duration', 'CreditAmount')) {
 ```
 
 
-## Etapa 5 - Criacao do Modelo de ReferÍncia
+## Etapa 5 - Cria√ß√£o do Modelo de Refer√™ncia
  
-ApÛs terminar a an·lise exploratÛria, prossegue-se ‡ criaÁ„o do modelo base: contendo todas as vari·veis e sem nenhuma transformaÁ„o, ser· usado como referÍncia para os prÛximos.
+Ap√≥s terminar a an√°lise explorat√≥ria, prossegue-se √† cria√ß√£o do modelo base: contendo todas as vari√°veis e sem nenhuma transforma√ß√£o, ser√° usado como refer√™ncia para os pr√≥ximos.
  
 ```{r simples}
 ## Regressao Classica
@@ -184,10 +186,10 @@ confusionMatrix(SimpleModel_pred, test_sample$CreditStatus)
 ```
 
 
-## Etapa 6 - ExecuÁ„o dos Modelos
+## Etapa 6 - Execu√ß√£o dos Modelos
 
 
-Por fim, chega-se ‡ motivaÁ„o do trabalho: selecionar o modelo com o melhor poder de classificar bons e maus pagadores. Como a amostra de treino n„o È t„o grande, usam-se validaÁıes cruzadas repetidas (geradas a partir de bootstrap) para aument·-la artificialmente. SÛ ser„o consideradas as caracterÌsticas com maior poder explicativo selecionadas anteriormente para garantir a m·xima eficiÍncia. A mÈtrica escolhida foi 'ROC', pois, como o problema È de classificaÁ„o, ela È mais indicada por usar a taxa entre falsos e verdadeiros positivos.
+Por fim, chega-se √† motiva√ß√£o do trabalho: selecionar o modelo com o melhor poder de classificar bons e maus pagadores. Como a amostra de treino n√£o √© t√£o grande, usam-se valida√ß√µes cruzadas repetidas (geradas a partir de bootstrap) para aument√°-la artificialmente. S√≥ ser√£o consideradas as caracter√≠sticas com maior poder explicativo selecionadas anteriormente para garantir a m√°xima efici√™ncia. A m√©trica escolhida foi 'ROC', pois, como o problema √© de classifica√ß√£o, ela √© mais indicada por usar a taxa entre falsos e verdadeiros positivos.
 
 ```{r modelos, results = "hide", warning = FALSE}
 # Melhores Variaveis
@@ -207,7 +209,7 @@ train_control <- trainControl(method="repeatedcv",
 ## Modelos com tratamento
 
 # Glm com melhores variaveis
-FSModel <- glmModel_fs <- train(FS_formula, 
+FSModel <- train(FS_formula, 
                                 data = train_sample,
                                 method = 'glm',
                                 metric = "ROC",
@@ -242,7 +244,7 @@ RfModel <- train(FS_formula,
 
 ## KNN
 
-# Grid para escolher melhores hiper parametros (no caso, so mtry - resto e default)
+# Grid para escolher melhores hiper parametros (no caso, apenas n√∫mero de vizinhos - k)
 tuning_grid_knn <- expand.grid(.k = 1:25)
 
 # Modelo
@@ -254,18 +256,18 @@ KnnModel <- train(FS_formula,
                   tuneGrid = tuning_grid_knn)
 ```
 
-Assim como visto acima, foram selecionados 4 algorÌtmos de classificaÁ„o muito utilizados: GLM, GLMNET, RF e KNN. O primeiro È o mais simples, sendo o mesmo utilizado para controle; o segundo È uma vers„o mais sofisticada deste que utiliza as penalidade conhecidas como L1 e L2; o terceiro È o j· mencionado "Random Forests"; e o quarto È um "K-Nearest Neighbors", que se baseia em observaÁıes similares para se chegar a uma classificaÁ„o. Nos 3 ˙ltimos, por serem mais complexos, pode-se executar a escolha de hiper-par‚metros com o intuito de melhorar ainda mais o desempenho. Para otimizar essa opÁ„o, usa-se o recurso "expand.grid" que compara diferentes combinaÁıes deles.
+Assim como visto acima, foram selecionados 4 algor√≠tmos de classifica√ß√£o muito utilizados: GLM, GLMNET, RF e KNN. O primeiro √© o mais simples, sendo o mesmo utilizado para controle; o segundo √© uma vers√£o mais sofisticada deste que utiliza as penalidade conhecidas como L1 e L2; o terceiro √© o j√° mencionado "Random Forests"; e o quarto √© um "K-Nearest Neighbors", que se baseia em observa√ß√µes similares para se chegar a uma classifica√ß√£o. Nos 3 √∫ltimos, por serem mais complexos, pode-se executar a escolha de hiper-par√¢metros com o intuito de melhorar ainda mais o desempenho. Para otimizar essa op√ß√£o, usa-se o recurso "expand.grid" que compara diferentes combina√ß√µes deles.
 
 
-## Etapa 7 - An·lise dos Resultados
+## Etapa 7 - An√°lise dos Resultados
 
-ApÛs o ajustamento dos modelos, faz-se uma comparaÁ„o da sua mÈtrica utilizada para descobrir qual possui a melhor performance no treino.
+Ap√≥s o ajustamento dos modelos, faz-se uma compara√ß√£o da sua m√©trica utilizada para descobrir qual possui a melhor performance no treino.
 
 ```{r dotplot}
 # Lista com os modelos
 model_list <- list(GLM_FS = FSModel, GLMNET = GlmnetModel, RF = RfModel, KNN = KnnModel)
 
-# FunÁ„o resamples para compar·-los
+# Fun√ß√£o resamples para compar√°-los
 resamples <- resamples(model_list)
 
 # dotplot
@@ -278,8 +280,8 @@ confusionMatrix(GlmnetModel_pred, test_sample$CreditStatus)
 confusionMatrix(FSModel_pred, test_sample$CreditStatus)
 ```
 
-Como se pode observar acima, os modelos GLM's obtiveram melhor desempenho dentre os outros. Resultado tambÈm observado nas suas tabelas de confus„o: houve uma melhora na acur·cia de 2.48 %, no entanto o mais incrÌvel È constatar como o modelo mais simples possui tanta capacidade. 
+Como se pode observar acima, os modelos GLM's obtiveram melhor desempenho dentre os outros. Resultado tamb√©m observado nas suas tabelas de confus√£o: houve uma melhora na acur√°cia de 2.48 %, no entanto o mais incr√≠vel √© constatar como o modelo mais simples possui tanta capacidade. 
 
-Vale ressaltar como h· espaÁo para muitas outras melhorias, como a criaÁ„o de novas vari·veis a partir das originais ou outros algorÌtmos de classificaÁ„o, no entanto o objetivo principal do trabalho foi demonstrar como somente uma melhor escolha de vari·veis pode, por vezes, ser um fator muito mais relevante para performance do que o uso de modelos super complexos.
+Vale ressaltar como h√° espa√ßo para muitas outras melhorias, como a cria√ß√£o de novas vari√°veis a partir das originais ou outros algor√≠tmos de classifica√ß√£o, no entanto o objetivo principal do trabalho foi demonstrar como somente uma melhor escolha de vari√°veis pode, por vezes, ser um fator muito mais relevante para performance do que o uso de modelos super complexos.
 
 ## Fim
