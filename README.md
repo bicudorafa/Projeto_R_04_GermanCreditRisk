@@ -1,0 +1,2 @@
+# Projeto_R_04_GermanCreditRisk
+Projeto com o intuito de analisar os dados sobre qualidade de crédito (German Credita Data - (https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data), do repositório de ML da UCI, para exploração dos dados, criação de um modelo simples de classificação de bons e maus pagadores e como uma melhor seleção de variáveis pode aumentar a eficácia do modelo.
